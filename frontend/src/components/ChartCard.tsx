@@ -51,7 +51,7 @@ export default function ChartCard({ chart, colors }: { chart: ChartSpec; colors:
               dataKey={chart.yKeys[0]}
               nameKey={chart.xKey}
               outerRadius={100}
-              label={(entry) => String(entry[chart.xKey])}
+              label={(entry) => String((entry as unknown as Record<string, unknown>)[chart.xKey])}
             >
               {chart.data.map((_, i) => (
                 <Cell key={i} fill={COLORS[i % COLORS.length]} />
