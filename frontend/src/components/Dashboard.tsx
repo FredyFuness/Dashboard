@@ -12,6 +12,7 @@ interface Props {
   onPaletteChange: (index: number) => void
   onSheetChange: (sheet: string) => void
   onReset: () => void
+  loading: boolean
 }
 
 export default function Dashboard({
@@ -22,6 +23,7 @@ export default function Dashboard({
   onPaletteChange,
   onSheetChange,
   onReset,
+  loading,
 }: Props) {
   const colors = PALETTES[paletteIndex].colors
 
@@ -41,7 +43,7 @@ export default function Dashboard({
         </div>
         <div className="dashboard-actions">
           {data.sheets.length > 1 && (
-            <select value={data.selectedSheet} onChange={(e) => onSheetChange(e.target.value)}>
+            <select aria-label="Hoja del Excel" value={data.selectedSheet} disabled={loading} onChange={(e) => onSheetChange(e.target.value)}>
               {data.sheets.map((s) => (
                 <option key={s} value={s}>
                   {s}
