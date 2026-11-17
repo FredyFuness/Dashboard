@@ -10,7 +10,7 @@ Aplicación web que convierte una hoja de cálculo en un panel de indicadores y 
 - Vista previa de hasta 50 filas.
 - Observaciones sobre tendencias, valores atípicos y datos incompletos.
 
-Las observaciones se generan mediante reglas estadísticas en Python; no requieren un modelo de IA generativa. La API acepta extensiones `.xlsx`, `.xls` y `.xlsm`; la lectura de `.xls` requiere un motor adicional compatible que no está incluido en el archivo actual de dependencias. CSV no está implementado en el endpoint actual.
+Las observaciones se generan mediante reglas estadísticas en Python; no requieren un modelo de IA generativa. La API admite archivos `.xlsx` y `.xlsm`, con un límite de 10 MB y validación básica de formato. `.xls` y CSV todavía no están implementados.
 
 ## Tecnologías y organización
 - `frontend/`: React, TypeScript, Vite, Recharts y Axios.
@@ -49,3 +49,13 @@ Abre la dirección que muestre Vite, normalmente `http://localhost:5173`. La API
 
 ## Alcance
 Prototipo con frontend y backend implementados. Las inferencias dependen de la estructura de los datos y requieren revisión humana. La configuración de publicación del frontend no sustituye la ejecución de la API. Las instrucciones anteriores describen la configuración del código; no constituyen una certificación de despliegue o pruebas en producción.
+
+## Pruebas automatizadas
+Desde la carpeta `backend/`:
+
+```bash
+python -m pip install -r requirements-test.txt
+python -m pytest -q
+```
+
+El workflow `.github/workflows/backend-tests.yml` ejecuta estas pruebas para cambios en la rama de correcciones y pull requests hacia `main`.
