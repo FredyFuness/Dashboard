@@ -146,22 +146,24 @@ def _categorical_charts(
     metric = numeric_cols[0] if numeric_cols else None
 
     for cat_col in categorical_cols[:3]:
+        # Keep the aggregation key distinct from the user's category column,
+        # which may itself be named "value".
+        value_key = "_dashboard_value" if cat_col == "value" else "value"
         if metric:
             grouped = (
                 df.groupby(cat_col, dropna=True)[metric]
                 .sum()
                 .sort_values(ascending=False)
                 .head(MAX_CATEGORIES)
-                .reset_index()
+                .reset_index(name=value_key)
             )
-            grouped.rename(columns={metric: "value"}, inplace=True)
         else:
             grouped = (
                 df[cat_col]
                 .value_counts(dropna=True)
                 .head(MAX_CATEGORIES)
                 .rename_axis(cat_col)
-                .reset_index(name="value")
+                .reset_index(name=value_key)
             )
 
         chart_type = "pie" if df[cat_col].nunique(dropna=True) <= 8 else "bar"
@@ -170,7 +172,7 @@ def _categorical_charts(
                 "type": chart_type,
                 "title": f"{metric or 'Cantidad'} por {cat_col}",
                 "xKey": cat_col,
-                "yKeys": ["value"],
+                "yKeys": [value_key],
                 "data": _clean_records(grouped),
             }
         )
