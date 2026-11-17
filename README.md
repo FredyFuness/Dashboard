@@ -10,7 +10,7 @@ Aplicación web que convierte una hoja de cálculo en un panel de indicadores y 
 - Vista previa de hasta 50 filas.
 - Observaciones sobre tendencias, valores atípicos y datos incompletos.
 
-Las observaciones se generan mediante reglas estadísticas en Python; no requieren un modelo de IA generativa. La API admite archivos `.xlsx` y `.xlsm`, con un límite de 10 MB y validación básica de formato. `.xls` y CSV todavía no están implementados.
+Las observaciones se generan mediante reglas estadísticas en Python; no requieren un modelo de IA generativa. La API admite archivos `.xlsx` y `.xlsm`, con un límite de 10 MiB por archivo y validación básica de estructura OOXML. También limita la expansión del ZIP a 80 MiB y el número de entradas a 1000. `.xls` y CSV todavía no están implementados.
 
 ## Tecnologías y organización
 - `frontend/`: React, TypeScript, Vite, Recharts y Axios.
@@ -58,4 +58,14 @@ python -m pip install -r requirements-test.txt
 python -m pytest -q
 ```
 
-El workflow `.github/workflows/backend-tests.yml` ejecuta estas pruebas para cambios en la rama de correcciones y pull requests hacia `main`.
+El workflow `.github/workflows/backend-tests.yml` ejecuta las pruebas al subir cambios a las ramas `fix/**` y al crear pull requests hacia `main`. También hay comprobaciones del frontend en `.github/workflows/frontend-checks.yml`.
+
+Desde la carpeta `frontend/`:
+
+```bash
+npm ci
+npm run lint
+npm run build
+```
+
+**Nota de seguridad:** el límite de lectura se aplica dentro de FastAPI, después del análisis del formulario multipart. Si se publica con tráfico no confiable, configurar también un límite de tamaño de petición en el proxy/plataforma de entrada; los límites del archivo ZIP son una medida de defensa adicional, no un aislamiento completo del procesamiento de documentos.
