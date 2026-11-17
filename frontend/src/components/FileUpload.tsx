@@ -5,7 +5,7 @@ interface Props {
   disabled?: boolean
 }
 
-const ACCEPTED = '.xlsx,.xls,.xlsm'
+const ACCEPTED = '.xlsx,.xlsm'
 
 export default function FileUpload({ onFileSelected, disabled }: Props) {
   const [isDragging, setIsDragging] = useState(false)
@@ -40,7 +40,7 @@ export default function FileUpload({ onFileSelected, disabled }: Props) {
         onChange={(e) => handleFiles(e.target.files)}
       />
       <p className="upload-title">Arrastrá tu archivo Excel aquí</p>
-      <p className="upload-subtitle">o hacé clic para elegirlo (.xlsx, .xls, .xlsm)</p>
+      <p className="upload-subtitle">o hacé clic para elegirlo (.xlsx, .xlsm)</p>
     </div>
   )
 }
