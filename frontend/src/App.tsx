@@ -60,6 +60,8 @@ function App() {
         </>
       )}
 
+      {data && error && <p className="status error" role="alert">{error}</p>}
+      {data && loading && <p className="status" role="status">Actualizando hoja…</p>}
       {data && file && (
         <Dashboard
           data={data}
