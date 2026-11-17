@@ -6,6 +6,7 @@ import math
 from typing import Any
 
 import pandas as pd
+import numpy as np
 
 from insights import build_insights
 
@@ -19,8 +20,14 @@ def _clean(value: Any) -> Any:
         return None
     if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
         return None
-    if isinstance(value, (pd.Timestamp,)):
+    if isinstance(value, pd.Timestamp):
         return value.isoformat()
+    if isinstance(value, np.generic):
+        return _clean(value.item())
+    if isinstance(value, (pd.Timedelta,)):
+        return str(value)
+    if isinstance(value, (list, dict, tuple)):
+        return str(value)
     if pd.isna(value):
         return None
     return value
@@ -39,6 +46,10 @@ def _read_sheet(file_bytes: bytes, sheet_name: str) -> pd.DataFrame:
     df = pd.read_excel(io.BytesIO(file_bytes), sheet_name=sheet_name)
     df = df.dropna(axis=1, how="all").dropna(axis=0, how="all")
     df.columns = [str(c).strip() for c in df.columns]
+    if df.empty or len(df.columns) == 0:
+        raise ValueError("La hoja seleccionada no contiene datos")
+    if not df.columns.is_unique:
+        raise ValueError("La hoja contiene nombres de columnas duplicados")
     return df
 
 
@@ -109,7 +120,9 @@ def _time_series_charts(
     span_days = (df[date_col].max() - df[date_col].min()).days if len(df) > 1 else 0
     freq = "D" if span_days <= 90 else ("W" if span_days <= 730 else "MS")
 
-    grouped = df.set_index(date_col).sort_index()
+    grouped = df.dropna(subset=[date_col]).set_index(date_col).sort_index()
+    if grouped.empty:
+        return charts
     metrics = numeric_cols[:3]
     agg = grouped[metrics].resample(freq).sum().reset_index()
     agg[date_col] = agg[date_col].dt.strftime("%Y-%m-%d")
@@ -166,7 +179,11 @@ def _categorical_charts(
 
 def build_dashboard(file_bytes: bytes, sheet_name: str | None = None) -> dict[str, Any]:
     sheets = list_sheets(file_bytes)
-    selected_sheet = sheet_name if sheet_name in sheets else sheets[0]
+    if not sheets:
+        raise ValueError("El libro no contiene hojas")
+    if sheet_name is not None and sheet_name not in sheets:
+        raise ValueError("La hoja solicitada no existe")
+    selected_sheet = sheet_name if sheet_name is not None else sheets[0]
 
     df = _read_sheet(file_bytes, selected_sheet)
     columns = _classify_columns(df)
