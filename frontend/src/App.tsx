@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import FileUpload from './components/FileUpload'
 import Dashboard from './components/Dashboard'
 import { analyzeFile } from './api'
@@ -18,30 +18,35 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [title, setTitle] = useState('')
   const [paletteIndex, setPaletteIndex] = useState(0)
+  const latestRequest = useRef(0)
 
   const run = async (selectedFile: File, sheetName?: string) => {
+    const requestId = ++latestRequest.current
     setLoading(true)
     setError(null)
     try {
       const result = await analyzeFile(selectedFile, sheetName)
+      if (requestId !== latestRequest.current) return
+      if (!file || file !== selectedFile) {
+        setTitle(defaultTitle(selectedFile.name))
+      }
       setData(result)
-      setFile((prevFile) => {
-        if (!prevFile || prevFile.name !== selectedFile.name) {
-          setTitle(defaultTitle(selectedFile.name))
-        }
-        return selectedFile
-      })
+      setFile(selectedFile)
     } catch (err) {
+      if (requestId !== latestRequest.current) return
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
-      setLoading(false)
+      if (requestId === latestRequest.current) setLoading(false)
     }
   }
 
   const reset = () => {
+    ++latestRequest.current // Ignore any response from an earlier request.
     setData(null)
     setFile(null)
     setError(null)
+    setTitle('')
+    setLoading(false)
     setPaletteIndex(0)
   }
 
@@ -60,6 +65,8 @@ function App() {
         </>
       )}
 
+      {data && error && <p className="status error" role="alert">{error}</p>}
+      {data && loading && <p className="status" role="status">Actualizando hoja…</p>}
       {data && file && (
         <Dashboard
           data={data}
@@ -69,6 +76,7 @@ function App() {
           onPaletteChange={setPaletteIndex}
           onSheetChange={(sheet) => run(file, sheet)}
           onReset={reset}
+          loading={loading}
         />
       )}
     </div>

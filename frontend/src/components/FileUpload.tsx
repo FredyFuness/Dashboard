@@ -5,21 +5,45 @@ interface Props {
   disabled?: boolean
 }
 
-const ACCEPTED = '.xlsx,.xls,.xlsm'
+const ACCEPTED = '.xlsx,.xlsm'
+const MAX_FILE_BYTES = 10 * 1024 * 1024
 
 export default function FileUpload({ onFileSelected, disabled }: Props) {
   const [isDragging, setIsDragging] = useState(false)
+  const [localError, setLocalError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleFiles = (files: FileList | null) => {
     const file = files?.[0]
-    if (file) onFileSelected(file)
+    if (!file || disabled) return
+
+    if (!/\.(xlsx|xlsm)$/i.test(file.name)) {
+      setLocalError('Seleccioná un archivo Excel .xlsx o .xlsm.')
+      return
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      setLocalError('El archivo supera el límite de 10 MiB.')
+      return
+    }
+
+    setLocalError(null)
+    onFileSelected(file)
   }
 
   return (
     <div
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-label="Seleccionar archivo Excel"
+      aria-disabled={disabled}
       className={`upload-zone${isDragging ? ' dragging' : ''}${disabled ? ' disabled' : ''}`}
       onClick={() => !disabled && inputRef.current?.click()}
+      onKeyDown={(e) => {
+        if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault()
+          inputRef.current?.click()
+        }
+      }}
       onDragOver={(e) => {
         e.preventDefault()
         if (!disabled) setIsDragging(true)
@@ -28,7 +52,7 @@ export default function FileUpload({ onFileSelected, disabled }: Props) {
       onDrop={(e) => {
         e.preventDefault()
         setIsDragging(false)
-        if (!disabled) handleFiles(e.dataTransfer.files)
+        handleFiles(e.dataTransfer.files)
       }}
     >
       <input
@@ -37,10 +61,14 @@ export default function FileUpload({ onFileSelected, disabled }: Props) {
         accept={ACCEPTED}
         hidden
         disabled={disabled}
-        onChange={(e) => handleFiles(e.target.files)}
+        onChange={(e) => {
+          handleFiles(e.target.files)
+          e.target.value = ''
+        }}
       />
       <p className="upload-title">Arrastrá tu archivo Excel aquí</p>
-      <p className="upload-subtitle">o hacé clic para elegirlo (.xlsx, .xls, .xlsm)</p>
+      <p className="upload-subtitle">o hacé clic para elegirlo (.xlsx, .xlsm, hasta 10 MiB)</p>
+      {localError && <p className="status error" role="alert">{localError}</p>}
     </div>
   )
 }

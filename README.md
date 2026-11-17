@@ -10,7 +10,7 @@ Aplicación web que convierte una hoja de cálculo en un panel de indicadores y 
 - Vista previa de hasta 50 filas.
 - Observaciones sobre tendencias, valores atípicos y datos incompletos.
 
-Las observaciones se generan mediante reglas estadísticas en Python; no requieren un modelo de IA generativa. La API acepta extensiones `.xlsx`, `.xls` y `.xlsm`; la lectura de `.xls` requiere un motor adicional compatible que no está incluido en el archivo actual de dependencias. CSV no está implementado en el endpoint actual.
+Las observaciones se generan mediante reglas estadísticas en Python; no requieren un modelo de IA generativa. La API admite archivos `.xlsx` y `.xlsm`, con un límite de 10 MiB por archivo y validación básica de estructura OOXML. También limita la expansión del ZIP a 80 MiB y el número de entradas a 1000. `.xls` y CSV todavía no están implementados.
 
 ## Tecnologías y organización
 - `frontend/`: React, TypeScript, Vite, Recharts y Axios.
@@ -49,3 +49,23 @@ Abre la dirección que muestre Vite, normalmente `http://localhost:5173`. La API
 
 ## Alcance
 Prototipo con frontend y backend implementados. Las inferencias dependen de la estructura de los datos y requieren revisión humana. La configuración de publicación del frontend no sustituye la ejecución de la API. Las instrucciones anteriores describen la configuración del código; no constituyen una certificación de despliegue o pruebas en producción.
+
+## Pruebas automatizadas
+Desde la carpeta `backend/`:
+
+```bash
+python -m pip install -r requirements-test.txt
+python -m pytest -q
+```
+
+El workflow `.github/workflows/backend-tests.yml` ejecuta las pruebas al subir cambios a las ramas `fix/**` y al crear pull requests hacia `main`. También hay comprobaciones del frontend en `.github/workflows/frontend-checks.yml`.
+
+Desde la carpeta `frontend/`:
+
+```bash
+npm ci
+npm run lint
+npm run build
+```
+
+**Nota de seguridad:** el límite de lectura se aplica dentro de FastAPI, después del análisis del formulario multipart. Si se publica con tráfico no confiable, configurar también un límite de tamaño de petición en el proxy/plataforma de entrada; los límites del archivo ZIP son una medida de defensa adicional, no un aislamiento completo del procesamiento de documentos.
